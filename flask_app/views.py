@@ -5,13 +5,6 @@ from flask_app.connectdb import app
 from flask_app.models import User
 
 
-@app.errorhandler(ValidationError)
-def handle_validation_error(error):
-    response = jsonify({'message': 'Validation Error', 'errors': error.to_dict()})
-    response.status_code = 400
-    return response
-
-
 @app.route('/', methods=['GET'])
 def home():
     return '''
@@ -34,6 +27,7 @@ def create_user():
     try:
         data = request.get_json()
         new_user = User(name=data['name'], age=data['age'])
+        new_user.validate()
         new_user.save()
     except ValidationError as e:
         return jsonify({'message': 'BAD REQUEST', 'errors': e.to_dict()}), 400
@@ -62,6 +56,7 @@ def get_user(pk):
 def update_user(pk):
     data = request.get_json()
     count = User.objects.filter(id=pk).update(**data)
+
     if count:
         return jsonify({'message': 'User updated successfully'}), 200
     else:
